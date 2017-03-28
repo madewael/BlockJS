@@ -1,19 +1,30 @@
-//const Block = require("./public/javascripts/bc/block.js");
-//const Node = require("./public/javascripts/bc/node.js");
-//const MSG = require("./public/javascripts/bc/messages.js");
+var io = require('socket.io');
 
-function handleNewConnection(io, socket) {
-    console.log("socket-io connection");
-    socket.emit('message', "hallo");
-    socket.on('broadcast', (data)=>{
-        socket.broadcast.emit('message',data);
-    });
+function install(server) {
+    io = io(server);
+    io.on('connection', handleNewConnection);
 }
 
-function install(io) {
-    io.on('connection', function (socket) {
-        handleNewConnection(io, socket);
+function handleNewConnection(socket) {
+    console.log("socket-io connection");
+    socket.emit('message', "conneced");
+    socket.emit('message', io.engine.clientsCount);
+
+    socket.on('broadcast', (data) => {
+        data.src = socket.id;
+        console.log(data);
+        socket.broadcast.emit('message', data);
     });
+
+    socket.on('message', (data) => {
+        if (data.tar) {
+            data.src = socket.id;
+            socket.broadcast.to(data.tar).emit('message', data);
+        } else {
+            console.log("unaddressed message", data);
+        }
+    });
+
 }
 
 module.exports = install;

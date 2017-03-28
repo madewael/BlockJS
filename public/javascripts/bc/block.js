@@ -14,15 +14,13 @@ const Block = (function () {
     }
 
     Block.prototype.initHash = function(){
+        LOG("initHash");
         this.hash = this.computeHash();
     };
 
     Block.prototype.computeHash = function () {
         return SHA256(
-            this.index +
-            this.prevHash +
-            this.timestamp +
-            JSON.stringify(this.data)
+            "" + this.index + this.data + this.prevHash
         ).toString();
     };
 
@@ -33,21 +31,21 @@ const Block = (function () {
     }
 
     Block.prototype.hasProofOfWork = function () {
-        const length = 3;
+        /*const length = 3;
         const sub = this.hash.substr(this.hash.length - length);
-        return sub === length2suffix(length);
+        return sub === length2suffix(length);*/
+        return true;
     };
 
     Block.prototype.toString = function () {
         return JSON.stringify({
             index: this.index,
             prev: this.prevHash,
-            date: this.data,
+            data: this.data,
             timestamp: this.timestamp,
             hash: this.hash
         });
     };
-
 
 
     Block.prototype.isValid = function (prevBlock) {
@@ -56,13 +54,18 @@ const Block = (function () {
         if (this===Block.genesisBlock) {
             return true;
         } else if (this.index !== prevBlock.index + 1) {
-            console.log("invalid index",prevBlock,this);
+            LOG("Block.prototype.isValid: invalid index");
             return false;
         } else if (this.prevHash != prevBlock.hash) {
-            console.log("invalid prev hash");
+            let expected = prevBlock.hash,
+                received = this.prevHash;
+
+            LOG("Block.prototype.isValid: invalid prev hash (expected "+expected+" received "+received+")");
             return false;
         } else if (this.hash !== this.computeHash()) {
-            console.log("invalid hash");
+            let expected = this.computeHash(),
+                received = this.hash;
+            LOG("Block.prototype.isValid: invalid hash (expected "+expected+" received "+received+")");
             return false;
         } else {
             return true;
@@ -88,7 +91,7 @@ const Block = (function () {
         return newBlock;
     };
 
-    Block.genesisBlock = new Block(0, undefined, null, 0, undefined, null);
+    Block.genesisBlock = new Block(0, "(no prev hash)", "(no data)", 0, undefined, null);
 
     Block.parse = function (str) {
         let obj = JSON.parse(str);
